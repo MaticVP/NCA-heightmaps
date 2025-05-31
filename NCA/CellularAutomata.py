@@ -6,11 +6,16 @@ ident = torch.tensor([[0.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,0.0]])
 sobel_x = torch.tensor([[-1.0,0.0,1.0],[-2.0,0.0,2.0],[-1.0,0.0,1.0]])
 lap = torch.tensor([[1.0,2.0,1.0],[2.0,-12,2.0],[1.0,2.0,1.0]])
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+torch.set_default_device(device)
+
 def perchannel_conv(x, filters):
   '''filters: [filter_n, h, w]'''
   b, ch, h, w = x.shape
   y = x.reshape(b*ch, 1, h, w)
   y = F.pad(y, [1, 1, 1, 1], 'circular')
+  y = y.to(device)
+  filters = filters.to(device)
   y = F.conv2d(y, filters[:,None])
   return y.reshape(b, -1, h, w)
 

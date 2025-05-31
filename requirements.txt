@@ -1,0 +1,13 @@
+streamlit
+torch
+torchvision
+matplotlib
+numpy
+Pillow
+plotly
+pythreejs
+stpyvista
+trimesh
+scipy
+opencv-python
+pyvista

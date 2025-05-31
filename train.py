@@ -3,6 +3,7 @@ import argparse
 
 import PIL.Image
 import cv2
+import matplotlib
 import numpy as np
 import pylab as pl
 import torch.optim
@@ -11,11 +12,12 @@ import torch
 import torchvision.models as models
 import torch.nn.functional as F
 from torch import nn
-
 from NCA.CellularAutomata import CA, to_rgb, NoiseCA, FullCA
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 torch.set_default_device(device)
+
+matplotlib.use('Agg')
 
 vgg16 = models.vgg16(weights='IMAGENET1K_V1').features
 
