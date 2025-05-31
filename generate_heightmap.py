@@ -7,6 +7,7 @@ import argparse
 matplotlib.use('Agg')
 
 METHOD_CHOICES = [
+    "Perlin",
     "FBM",
     "Noise Perlin",
     "Noise FBM",
