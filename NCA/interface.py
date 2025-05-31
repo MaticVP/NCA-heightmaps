@@ -7,6 +7,9 @@ from NCA.CellularAutomata import CA, to_rgb, NoiseCA, FullCA
 
 def gen_hightmap(type, start_seed=None,numSteps=10,steps=12, res=64, seed_size=8):
 
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    torch.set_default_device(device)
+
     if type == "Perlin" or type == "FBM":
         ca = CA()
     elif type == "Noise FBM" or type == "Noise Perlin" or type == "Chunk Perlin" or type == "Chunk FBM":
@@ -15,28 +18,28 @@ def gen_hightmap(type, start_seed=None,numSteps=10,steps=12, res=64, seed_size=8
         ca = FullCA(noise_level=0.2)
 
     if type == "Perlin":
-        ca.load_state_dict(torch.load("./Weights/ca_model_pearl_ero.pt", weights_only=True, map_location=torch.device('cpu')))
+        ca.load_state_dict(torch.load("./Weights/ca_model_pearl_ero.pt", weights_only=True, map_location=torch.device(device)))
 
     if type == "FBM":
-        ca.load_state_dict(torch.load("./Weights/ca_model_fbm_ero.pt", weights_only=True, map_location=torch.device('cpu')))
+        ca.load_state_dict(torch.load("./Weights/ca_model_fbm_ero.pt", weights_only=True, map_location=torch.device(device)))
 
     if type == "Noise Perlin":
-        ca.load_state_dict(torch.load("./Weights/nca_model_perlin_ero.pt", weights_only=True, map_location=torch.device('cpu')))
+        ca.load_state_dict(torch.load("./Weights/nca_model_perlin_ero.pt", weights_only=True, map_location=torch.device(device)))
 
     if type == "Noise FBM":
-        ca.load_state_dict(torch.load("./Weights/nca_model_fbm_ero.pt", weights_only=True, map_location=torch.device('cpu')))
+        ca.load_state_dict(torch.load("./Weights/nca_model_fbm_ero.pt", weights_only=True, map_location=torch.device(device)))
 
     if type == "Full Perlin":
-        ca.load_state_dict(torch.load("./Weights/fca_model_perlin_ero.pt", weights_only=True, map_location=torch.device('cpu')))
+        ca.load_state_dict(torch.load("./Weights/fca_model_perlin_ero.pt", weights_only=True, map_location=torch.device(device)))
 
     if type == "Full FBM":
-        ca.load_state_dict(torch.load("./Weights/fca_model_fbm_ero.pt", weights_only=True, map_location=torch.device('cpu')))
+        ca.load_state_dict(torch.load("./Weights/fca_model_fbm_ero.pt", weights_only=True, map_location=torch.device(device)))
 
     if type == "Chunk Perlin":
-        ca.load_state_dict(torch.load("./Weights/fca_model_perlin_ero_chunks.pt", weights_only=True, map_location=torch.device('cpu')))
+        ca.load_state_dict(torch.load("./Weights/fca_model_perlin_ero_chunks.pt", weights_only=True, map_location=torch.device(device)))
 
     if type == "Chunk FBM":
-        ca.load_state_dict(torch.load("./Weights/fca_model_fbm_ero_chunks.pt", weights_only=True, map_location=torch.device('cpu')))
+        ca.load_state_dict(torch.load("./Weights/fca_model_fbm_ero_chunks.pt", weights_only=True, map_location=torch.device(device)))
 
 
     if start_seed is None:
@@ -58,6 +61,8 @@ def gen_hightmap(type, start_seed=None,numSteps=10,steps=12, res=64, seed_size=8
 
         apply_ref(ref_xy, slice(0, chunk_size), slice(0, chunk_size))
 
+    ca = ca.to(device)
+    x = x.to(device)
 
     with torch.no_grad():
         for i in range(numSteps):

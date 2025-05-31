@@ -53,6 +53,15 @@ def gen_map(img, resolution, pixel_scale, height_scale):
 
     return mesh, face_colors
 
+def normalize_mesh(mesh):
+    bounds = mesh.bounds  # (min, max)
+    size = bounds[1] - bounds[0]
+    center = (bounds[0] + bounds[1]) / 2
+    max_dim = size.max()
+
+    mesh.apply_translation(-center)
+    mesh.apply_scale(1.0 / max_dim)
+
 def main():
     parser = argparse.ArgumentParser(description="Generate a colored heightmap mesh from an image")
     parser.add_argument('--image', type=str, required=True, help="Input image path (grayscale preferred)")
@@ -74,7 +83,7 @@ def main():
     )
 
     mesh.apply_transform(rot)
-    mesh.apply_scale(0.05)
+    normalize_mesh(mesh)
 
     if args.visualize:
         mesh.show()

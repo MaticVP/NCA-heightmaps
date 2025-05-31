@@ -6,10 +6,7 @@ ident = torch.tensor([[0.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,0.0]])
 sobel_x = torch.tensor([[-1.0,0.0,1.0],[-2.0,0.0,2.0],[-1.0,0.0,1.0]])
 lap = torch.tensor([[1.0,2.0,1.0],[2.0,-12,2.0],[1.0,2.0,1.0]])
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-torch.set_default_device(device)
-
-def perchannel_conv(x, filters):
+def perchannel_conv(x, filters,device):
   '''filters: [filter_n, h, w]'''
   b, ch, h, w = x.shape
   y = x.reshape(b*ch, 1, h, w)
@@ -19,9 +16,9 @@ def perchannel_conv(x, filters):
   y = F.conv2d(y, filters[:,None])
   return y.reshape(b, -1, h, w)
 
-def perception(x):
+def perception(x,device):
   filters = torch.stack([ident, sobel_x, sobel_x.T, lap])
-  return perchannel_conv(x, filters)
+  return perchannel_conv(x, filters,device)
 
 class CA(torch.nn.Module):
   def __init__(self, chn=12, hidden_n=96):
@@ -30,9 +27,11 @@ class CA(torch.nn.Module):
     self.w1 = nn.Conv2d(chn*4, hidden_n, 1)
     self.w2 = nn.Conv2d(hidden_n, chn, 1, bias=False)
     self.w2.weight.data.zero_()
+    self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    torch.set_default_device(self.device)
 
   def forward(self, x, update_rate=0.5):
-    y = perception(x)
+    y = perception(x,self.device)
     y = self.w2(torch.relu(self.w1(y)))
     b, c, h, w = y.shape
     udpate_mask = (torch.rand(b, 1, h, w)+update_rate).floor()
@@ -82,6 +81,8 @@ class FullCA(torch.nn.Module):
     self.padding_mode = padding_mode
     self.pos_emb = pos_emb
     self.expand = 4
+    self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    torch.set_default_device(self.device)
 
     self.c_cond = 0
     if self.pos_emb == 'CPE':
@@ -113,7 +114,7 @@ class FullCA(torch.nn.Module):
       x = F.interpolate(x, size=(h_new, w_new), mode='bilinear', align_corners=False)
 
     def _perceive_with_torch(z, weight):
-      conv_weights = weight.reshape(1, 1, 3, 3).repeat(self.c_in, 1, 1, 1).to("cpu")
+      conv_weights = weight.reshape(1, 1, 3, 3).repeat(self.c_in, 1, 1, 1).to(self.device)
       z = F.pad(z, [1, 1, 1, 1], self.padding_mode)
       return F.conv2d(z, conv_weights, groups=self.c_in)
 
@@ -169,9 +170,11 @@ class NoiseCA(torch.nn.Module):
     self.w2 = nn.Conv2d(hidden_n, chn, 1, bias=False)
     self.w2.weight.data.zero_()
     self.register_buffer("noise_level", torch.tensor([noise_level]))
+    self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    torch.set_default_device(self.device)
 
   def adaptation(self, x):
-    x = perception(x)
+    x = perception(x,self.device)
     return self.w2(torch.relu(self.w1(x)))
   def forward(self, x, update_rate=0.5, rk4Step = False):
 
@@ -187,7 +190,7 @@ class NoiseCA(torch.nn.Module):
 
       return x + (k1 + 2 * k2 + 2 * k3 + k4) * udpate_mask / 6.0
     else:
-      y = perception(x)
+      y = perception(x,self.device)
       y = self.w2(torch.relu(self.w1(y)))
       b, c, h, w = y.shape
       udpate_mask = (torch.rand(b, 1, h, w)+update_rate).floor()

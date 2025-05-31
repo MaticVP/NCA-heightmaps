@@ -38,17 +38,20 @@ def main(grid_size, method, res, num_steps, steps, seed_size, filename):
             seed[0] = uploaded_file
             map[i * grid_size + j] = uploaded_file
 
-    rows = []
-    for i in range(grid_size):
-        row = [map[i * grid_size + j] for j in range(grid_size)]
-        row_combined = np.hstack(row)
-        rows.append(row_combined)
+    full_image = map[0]
 
-    full_image = np.vstack(rows)
+    if grid_size>1:
+        rows = []
+        for i in range(grid_size):
+            row = [map[i * grid_size + j] for j in range(grid_size)]
+            row_combined = np.hstack(row)
+            rows.append(row_combined)
+
+        full_image = np.vstack(rows)
+
 
     plt.axis('off')
-    plt.imshow(full_image, cmap='gray')
-    plt.savefig(filename, bbox_inches='tight', pad_inches=0)
+    plt.imsave(filename, full_image, cmap='gray')
     #plt.show()
 
 if __name__ == "__main__":
